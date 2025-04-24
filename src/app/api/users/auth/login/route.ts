@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid password' }, { status: 400})
         }
 
-        const token = signJwt({ id: user.id, email: user.email })
+        const token = await signJwt({ id: user.id, email: user.email })
 
         const response = NextResponse.json({ 
             message: 'Login successful',
@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
         })
 
         response.cookies.set('token', token, {
-            httpOnly: true
+            httpOnly: true,
+            maxAge: 60 * 60 * 24,
+            path: '/',
+            secure: false
         })
         
         return response;

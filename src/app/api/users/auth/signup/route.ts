@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { User, createUser, checkIfEmailExists } from '@/models/userModel'
 import bcryptjs from 'bcryptjs'
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
     try {
         const reqBody = await req.json()
         const { email, firstName, lastName, password } = reqBody
