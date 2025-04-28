@@ -4,10 +4,12 @@ import bcryptjs from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
     try {
-        const reqBody = await req.json()
-        const { email, firstName, lastName, password } = reqBody
+        const reqBody = await req.json();
+        const { email, firstName, lastName, password } = reqBody;
 
-        console.log(reqBody);
+        if (!email || !password) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
 
         // Check if user exists with the same email address
         const user: User = await checkIfEmailExists(
@@ -15,11 +17,7 @@ export async function POST(req: NextRequest) {
         )
 
         if (user) {
-            return NextResponse.json({ error: 'User already exists.' }, { status: 400 });
-        }
-
-        if (!email || !password || !firstName || !lastName) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
 
         // Hash and salt password
@@ -34,10 +32,7 @@ export async function POST(req: NextRequest) {
             lastName
         )
 
-        return new Response(JSON.stringify(newUser), {
-            status: 201,
-            headers: { 'Content-Type': 'application/json' },
-        });
+        return NextResponse.json(newUser, { status: 201 });
 
     } catch (error) {
         console.error('Signup error: ', error);

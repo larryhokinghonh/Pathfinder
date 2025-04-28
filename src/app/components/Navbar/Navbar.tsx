@@ -1,13 +1,11 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation';
 
-// Make navbar transparent by setting navbar Z index to make it appear above everything else
-
 export default function Navbar() {
     const router = useRouter();
 
     const handleLogoClick = () => {
-        router.push('/');
+        router.push('/recommend');
     }
 
     const handleLogout = async () => {
@@ -20,12 +18,12 @@ export default function Navbar() {
     }
     
     return (
-        <nav className="flex font-[500] bg-blue-400 shadow-xl px-6 py-4 justify-between items-center">
+        <nav className="flex sticky font-[500] text-white w-full px-6 py-4 top-0 justify-between items-center rounded-2xl">
             <button onClick={handleLogoClick} className="text-2xl">
                 Pathfinder
             </button>
             <div className="text-lg space-x-4">
-                <Link href="#">Profile</Link>
+                <Link href="/profile">Profile</Link>
                 <button onClick={handleLogout}>Sign out</button>
             </div>
         </nav>

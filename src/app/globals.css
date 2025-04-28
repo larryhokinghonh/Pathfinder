@@ -2,19 +2,19 @@
 
 /* Define global CSS custom properties for light mode */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #ffffff;
+	--foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
 @theme {
-  --font-display: var(--font-manrope);
+	--font-display: var(--font-manrope);
 }
 
 /* Dark mode support */
@@ -26,7 +26,22 @@
 } */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-display);
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-display);
+}
+
+/* Styling for scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+	width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background-color: #9CA3AF;
+	border-radius: 10px;
+	border: none;
 }

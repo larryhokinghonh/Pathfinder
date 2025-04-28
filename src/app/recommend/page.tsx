@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react';
 import Navbar from '@/components/Navbar/Navbar'
+import FramedScreen from '@/components/FramedScreen/FramedScreen';
+import PageTransitionEffect from '@/components/PageTransitionEffect/PageTransitionEffect';
 
 export default function RecommendPage() {
     const [generatedRecommendation, setGeneratedRecommendation] = useState(null);
@@ -16,6 +18,18 @@ export default function RecommendPage() {
         course: ''
     });
 
+    async function fetchProfileData() {
+        try {
+            const res = await fetch('/api/users/profile');
+
+            if (res.ok) {
+                return res.json();
+            }
+        } catch (err) {
+            console.error('Failed to fetch profile data: ', err);
+        }
+    }   
+
     // Handle user input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -26,7 +40,12 @@ export default function RecommendPage() {
         // Prevents form to be submitted when form input is not validated 
         e.preventDefault();
 
+        const userBio = await fetchProfileData();
+
         const prompt = `Please provide detailed, structured career advisory and recommendations based on the student's profile:
+
+        Student's Bio:
+        - ${userBio.bio}
 
         Academic Background:
         - ${formData.grades}
@@ -86,6 +105,7 @@ export default function RecommendPage() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ prompt: prompt })
         })
 
@@ -101,47 +121,47 @@ export default function RecommendPage() {
         console.log(data)
 
         return (
-            <div>
-                <div>
-                    <p>Academic Advice</p>
-                    <p>{data.result.academicAdvice}</p>
+            <div className="bg-white text-black mt-4 p-6 rounded-2xl">
+                <div className="px-2">
+                    <p className="text-2xl">Academic Advice</p>
+                    <p className="text-lg">{data.result.academicAdvice}</p>
                 </div>
 
-                <div>
-                    <p>Universities</p>
+                <div className="mt-2 px-2">
+                    <p className="text-2xl">Universities</p>
                     <ul>
                         {data.result.universities?.map((uni: string, index: number) => (
-                            <li key={index}>{uni}</li>
+                            <li key={index}><p className="text-lg">{uni}</p></li>
                         ))}
                     </ul>
                 </div>
 
-                <div>
-                    <p>Courses</p>
+                <div className="mt-2 px-2">
+                    <p className="text-2xl">Courses</p>
                     <ul>
                         {data.result.courses?.map((course: string, index: number) => (
-                            <li key={index}>{course}</li>
+                            <li key={index}><p className="text-lg">{course}</p></li>
                         ))}
                     </ul>
                 </div>
 
-                <div>
-                    <p>Career Path</p>
-                    <p>{data.result.careerPath}</p>
+                <div className="mt-2 px-2">
+                    <p className="text-2xl">Career Path</p>
+                    <p className="text-lg">{data.result.careerPath}</p>
                 </div>
 
-                <div>
-                    <p>Financial Advice</p>
-                    <p>{data.result.financialAdvice}</p>
+                <div className="mt-2 px-2">
+                    <p className="text-2xl">Financial Advice</p>
+                    <p className="text-lg">{data.result.financialAdvice}</p>
                 </div>
 
-                <div>
-                    <p>Salary Insights</p>
+                <div className="mt-2 px-2">
+                    <p className="text-2xl">Salary Insights</p>
                     <ul>
-                        <li>Entry Level: {data.result.salaryInsights?.entryLevel}</li>
-                        <li>Mid Career: {data.result.salaryInsights?.midCareer}</li>
-                        <li>Senior: {data.result.salaryInsights?.senior}</li>
-                        <li>Notes: {data.result.salaryInsights?.notes}</li>
+                        <li className="text-lg">Entry Level: {data.result.salaryInsights?.entryLevel}</li>
+                        <li className="text-lg">Mid Career: {data.result.salaryInsights?.midCareer}</li>
+                        <li className="text-lg">Senior: {data.result.salaryInsights?.senior}</li>
+                        <li className="text-lg">Notes: {data.result.salaryInsights?.notes}</li>
                     </ul>
                 </div>
             </div>
@@ -149,100 +169,100 @@ export default function RecommendPage() {
     };
 
     return (
+        <PageTransitionEffect>
+            <FramedScreen>
+                <Navbar />
+                <div className="text-white w-full m-auto pt-6 px-6 justify-center items-center overflow-y-auto rounded-2xl custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* First row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="grades"><p className="text-xl">Academic Grades</p></label>
+                                <input className="block bg-black text-white p-4 border-2 rounded-2xl" name="grades" type="text" value={formData.grades} onChange={handleChange} placeholder="Enter Your Grades" />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="educationLevel"><p className="text-xl">Current Education Level</p></label>
+                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="educationLevel" defaultValue={"default"} onChange={handleChange}>
+                                    <option value="default">Select your education level</option>
+                                    <option value="highSchool">High School / A-Levels / STPM</option>
+                                    <option value="diploma">Diploma</option>
+                                    <option value="undergraduate">Undergraduate</option>
+                                </select>
+                            </div>
+                        </div>
 
-        <div>
-            <Navbar/>
-            <div className="m-auto rounded">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* First row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2">
-                        <div className="flex flex-col">
-                            <label htmlFor="grades">Academic Grades</label>
-                            <input className="block border-2 rounded" name="grades" type="text" value={formData.grades} onChange={handleChange} placeholder="Enter Your Grades" />
+                        {/* Second row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="country"><p className="text-xl">Country of Study Interest</p></label>
+                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="country" defaultValue={"default"} onChange={handleChange}>
+                                    <option value="default">Select country</option>
+                                    <option value="Singapore">Singapore</option>
+                                    <option value="Malaysia">Malaysia</option>
+                                    <option value="United States">United States</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="mbti"><p className="text-xl">MBTI Personality Type</p></label>
+                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="mbti" defaultValue={"default"} onChange={handleChange}>
+                                    <option value="default">Select MBTI type</option>
+                                    <option value="INTJ">INTJ - Architect</option>
+                                    <option value="INTP">INTP - Logician</option>
+                                    <option value="ENTJ">ENTJ - Commander</option>
+                                    <option value="ENTP">ENTP - Debater</option>
+                                    <option value="INFJ">INFJ - Advocate</option>
+                                    <option value="INFP">INFP - Mediator</option>
+                                    <option value="ENFJ">ENFJ - Protagonist</option>
+                                    <option value="ENFP">ENFP - Campaigner</option>
+                                    <option value="ISTJ">ISTJ - Logistician</option>
+                                    <option value="ISFJ">ISFJ - Defender</option>
+                                    <option value="ESTJ">ESTJ - Executive</option>
+                                    <option value="ESFJ">ESFJ - Consul</option>
+                                    <option value="ISTP">ISTP - Virtuoso</option>
+                                    <option value="ISFP">ISFP - Adventurer</option>
+                                    <option value="ESTP">ESTP - Entrepreneur</option>
+                                    <option value="ESFP">ESFP - Entertainer</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <label htmlFor="educationLevel">Current Education Level</label>
-                            <select className="block border-2 rounded" name="educationLevel" defaultValue={"default"} onChange={handleChange}>
-                                <option value="default">Select your education level</option>
-                                <option value="highSchool">High School / A-Levels / STPM</option>
-                                <option value="diploma">Diploma</option>
-                                <option value="undergraduate">Undergraduate</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    {/* Second row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2">
-                        <div className="flex flex-col">
-                            <label htmlFor="country">Country of Study Interest</label>
-                            <select className="block border-2 rounded" name="country" defaultValue={"default"} onChange={handleChange}>
-                                <option value="default">Select country</option>
-                                <option value="Singapore">Singapore</option>
-                                <option value="Malaysia">Malaysia</option>
-                                <option value="United States">United States</option>
-                                <option value="United Kingdom">United Kingdom</option>
-                            </select>
+                        {/* Third row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="annualHouseholdIncome"><p className="text-xl">Annual Household Income</p></label>
+                                <input className="block p-4 border-2 rounded-2xl" name="annualHouseholdIncome" type="text" value={formData.annualHouseholdIncome} onChange={handleChange} placeholder="" />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="extracurricular"><p className="text-xl">Extracurricular Activities</p></label>
+                                <input className="block p-4 border-2 rounded-2xl" name="extracurricular" type="text" value={formData.extracurricular} onChange={handleChange} placeholder="" />
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <label htmlFor="mbti">MBTI Personality Type</label>
-                            <select className="block border-2 rounded" name="mbti" defaultValue={"default"} onChange={handleChange}>
-                                <option value="default">Select MBTI type</option>
-                                <option value="INTJ">INTJ - Architect</option>
-                                <option value="INTP">INTP - Logician</option>
-                                <option value="ENTJ">ENTJ - Commander</option>
-                                <option value="ENTP">ENTP - Debater</option>
-                                <option value="INFJ">INFJ - Advocate</option>
-                                <option value="INFP">INFP - Mediator</option>
-                                <option value="ENFJ">ENFJ - Protagonist</option>
-                                <option value="ENFP">ENFP - Campaigner</option>
-                                <option value="ISTJ">ISTJ - Logistician</option>
-                                <option value="ISFJ">ISFJ - Defender</option>
-                                <option value="ESTJ">ESTJ - Executive</option>
-                                <option value="ESFJ">ESFJ - Consul</option>
-                                <option value="ISTP">ISTP - Virtuoso</option>
-                                <option value="ISFP">ISFP - Adventurer</option>
-                                <option value="ESTP">ESTP - Entrepreneur</option>
-                                <option value="ESFP">ESFP - Entertainer</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    {/* Third row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2">
-                        <div className="flex flex-col">
-                            <label htmlFor="annualHouseholdIncome">Annual Household Income</label>
-                            <input className="block border-2 rounded" name="annualHouseholdIncome" type="text" value={formData.annualHouseholdIncome} onChange={handleChange} placeholder="" />
+                        {/* Fourth row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="company"><p className="text-xl">Preferred Company</p></label>
+                                <input className="block p-4 border-2 rounded-2xl" name="company" type="text" value={formData.company} onChange={handleChange} placeholder="" />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="mb-2" htmlFor="jobRole"><p className="text-xl">Preferred Job Role</p></label>
+                                <input className="block p-4 border-2 rounded-2xl" name="jobRole" type="text" value={formData.jobRole} onChange={handleChange} placeholder="" />
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <label htmlFor="extracurricular">Extracurricular Activities</label>
-                            <input className="block border-2 rounded" name="extracurricular" type="text" value={formData.extracurricular} onChange={handleChange} placeholder="" />
-                        </div>
-                    </div>
 
-                    {/* Fourth row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2">
+                        {/* Last row */}
                         <div className="flex flex-col">
-                            <label htmlFor="company">Preferred Company</label>
-                            <input className="block border-2 rounded" name="company" type="text" value={formData.company} onChange={handleChange} placeholder="" />
+                            <label className="mb-2" htmlFor="course"><p className="text-xl">Preferred Course/Major</p></label>
+                            <input className="block p-4 border-2 rounded-2xl" name="course" type="text" value={formData.course} onChange={handleChange} placeholder="" />
                         </div>
-                        <div className="flex flex-col">
-                            <label htmlFor="jobRole">Preferred Job Role</label>
-                            <input className="block border-2 rounded" name="jobRole" type="text" value={formData.jobRole} onChange={handleChange} placeholder="" />
+                        <div className="m-auto">
+                            <button className="bg-white m-auto rounded-2xl" type="submit"><p className="text-black p-3">Get Personalized Recommendations</p></button>
                         </div>
-                    </div>
-
-                    {/* Last row */}
-                    <div className="flex flex-col">
-                        <label htmlFor="course">Preferred Course/Major</label>
-                        <input className="block border-2 rounded" name="course" type="text" value={formData.course} onChange={handleChange} placeholder="" />
-                    </div>
-                    <div className="m-auto">
-                        <button className="bg-black m-auto rounded" type="submit"><p className="text-white m-2">Get Personalized Recommendations</p></button>
-                    </div>
-                </form>
-            </div>
-
-            {renderRecommendation(generatedRecommendation)}
-        </div>
+                    </form>
+                    {renderRecommendation(generatedRecommendation)}
+                </div>
+            </FramedScreen>
+        </PageTransitionEffect>
     )
 }
