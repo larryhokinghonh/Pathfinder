@@ -5,7 +5,12 @@ import { verifyJwt } from '@/lib/jwt';
 export async function middleware(req: NextRequest) {
     const token = req.cookies.get('token')?.value ?? '';
 
-    const isProtected = req.nextUrl.pathname.startsWith('/recommend');
+    const protectedRoutePrefixes = [
+        '/recommend',
+        '/profile'
+    ]
+
+    const isProtected = protectedRoutePrefixes.some(prefix => req.nextUrl.pathname.startsWith(prefix));
 
     if (isProtected) {
         if (!token) {
@@ -22,6 +27,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/recommend',
-        '/recommend/:path*'],
+    matcher: [
+        '/recommend/:path*',
+        '/profile/:path*'],
 }

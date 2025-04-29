@@ -17,7 +17,7 @@ export default function PageTransitionEffect({ children, animation }: PageTransi
 
     // fadeandSlideInFromTop
     const defaultAnimation = {
-        initial: { opacity: 0, y: -20 },
+        initial: { opacity: 0, y: -30 },
         animate: { opacity: 1, y: 0 },
         transition: { duration: 0.5 },
         exit: { }

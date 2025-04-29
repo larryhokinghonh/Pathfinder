@@ -31,6 +31,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ result: JSON.parse(generatedResponse.choices[0].message.content) });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch recommendations.' }, { status: 500 });
+        return NextResponse.json({ error: `Failed to fetch recommendations: ${error}` }, { status: 500 });
     }
 }

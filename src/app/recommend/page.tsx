@@ -4,6 +4,26 @@ import Navbar from '@/components/Navbar/Navbar'
 import FramedScreen from '@/components/FramedScreen/FramedScreen';
 import PageTransitionEffect from '@/components/PageTransitionEffect/PageTransitionEffect';
 
+interface RecommendationData {
+    result: {
+        academicAdvice: string;
+        universities: { name: string, url: string }[];
+        courses: { name: string, url: string, description: string }[];
+        careerPath: {
+            shortTerm: string,
+            midTerm: string,
+            longTerm: string
+        };
+        financialAdvice: string;
+        salaryInsights: {
+            entryLevel: string,
+            midCareer: string,
+            senior: string,
+            notes: string
+        };
+    };
+}
+
 export default function RecommendPage() {
     const [generatedRecommendation, setGeneratedRecommendation] = useState(null);
     const [formData, setFormData] = useState({
@@ -143,7 +163,7 @@ export default function RecommendPage() {
         }
     }
 
-    const renderRecommendation = (data: any) => {
+    const renderRecommendation = (data: RecommendationData | null ) => {
         if (!data) return null;
         console.log(data)
 
