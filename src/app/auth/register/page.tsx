@@ -39,7 +39,7 @@ export default function SignupPage() {
         <PageTransitionEffect>
             <FramedScreen>
                 <div className="bg-white m-auto w-fit rounded-2xl">
-                    <button className="relative text-gray-600 hover:text-black my-4 ml-4 p-2 text-lg" onClick={() => window.history.back()}>← Back</button>
+                    <button className="relative text-gray-600 my-4 ml-4 p-2 text-lg hover:text-black" onClick={() => window.history.back()}>← Back</button>
                     <form className="px-12 pb-12" onSubmit={handleSubmit}>
                         <div className="flex flex-col">
                             <p className="text-4xl mb-8">Register Your Account</p>
