@@ -82,7 +82,7 @@ export default function ProfilePage() {
         <PageTransitionEffect>
             <FramedScreen>
                 <Navbar />
-                <div className="bg-white m-6 p-6 rounded-2xl">
+                <div className="bg-white m-6 p-6 overflow-y-auto rounded-2xl custom-scrollbar">
                     <p className="mb-6 text-4xl">Your Profile</p>
                     <form onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -101,7 +101,7 @@ export default function ProfilePage() {
                                 <textarea className="w-full p-4 border-2 rounded-2xl custom-scrollbar" name="bio" value={formData.bio} onChange={handleChange} rows={15}></textarea>
                             </div>
                         </div>
-                        <button className="bg-black rounded-2xl"><p className="text-white p-3">Save Profile</p></button>
+                        <button className="bg-black w-full rounded-2xl hover:scale-99 transition"><p className="text-white p-3">Save Profile</p></button>
                     </form>
                 </div>
 

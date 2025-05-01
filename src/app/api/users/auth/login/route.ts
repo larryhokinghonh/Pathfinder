@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         const reqBody = await req.json();
         const { email, password } = reqBody
 
-        const user: User = await checkIfEmailExists(
+        const user: User | undefined = await checkIfEmailExists(
             email
         )
 

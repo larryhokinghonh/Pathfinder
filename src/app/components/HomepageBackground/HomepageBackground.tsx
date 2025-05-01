@@ -164,7 +164,7 @@ const HomepageBackground: React.FC<SquaresProps> = ({
 	return (
 		<canvas
 			ref={canvasRef}
-			className="w-full h-full border-none block"
+			className="block w-full h-full border-none"
 		></canvas>
 	);
 };

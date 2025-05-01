@@ -10,19 +10,19 @@ export default function Navbar() {
             method: 'POST'
         })
 
-        router.push('/auth/login');
+        router.push('/');
         router.refresh();
     }
     
     return (
         <nav className="flex sticky font-[500] text-white w-full px-6 py-4 top-0 justify-between items-center rounded-2xl">
             <Link href="/recommend">
-                <button className="text-2xl">Pathfinder</button>
+                <button className="hover:scale-95 transition"><p className="text-2xl">Pathfinder</p></button>
             </Link>
 
             <div className="text-lg space-x-4">
-                <Link className={pathname === "/profile" ? "underline" : ""} href="/profile">Profile</Link>
-                <button onClick={handleLogout}>Sign out</button>
+                <Link href="/profile"><button className={pathname === "/profile" ? "underline hover:scale-95 transition" : "hover:scale-95 transition"}><p>Profile</p></button></Link>
+                <button className="hover:scale-95 transition" onClick={handleLogout}><p>Sign out</p></button>
             </div>
         </nav>
     )

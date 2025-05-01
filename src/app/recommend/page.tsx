@@ -3,9 +3,12 @@ import { useState } from 'react';
 import Navbar from '@/components/Navbar/Navbar'
 import FramedScreen from '@/components/FramedScreen/FramedScreen';
 import PageTransitionEffect from '@/components/PageTransitionEffect/PageTransitionEffect';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import RatingComponent from '@/components/Rating/Rating'
 
-interface RecommendationData {
+interface generatedResponse {
     result: {
+        title: string;
         academicAdvice: string;
         universities: { name: string, url: string }[];
         courses: { name: string, url: string, description: string }[];
@@ -37,6 +40,11 @@ export default function RecommendPage() {
         jobRole: '',
         course: ''
     });
+    const [modalData, setModalData] = useState({
+        comment: '',
+        rating: 2
+    })
+    const [promptId, setPromptId] = useState<string>('');
 
     async function fetchProfileData() {
         try {
@@ -51,8 +59,16 @@ export default function RecommendPage() {
     }
 
     // Handle user input changes
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
+    }
+
+    const handleRatingChange = (e: React.SyntheticEvent, newValue: number | null) => {
+        setModalData({ ...modalData, rating: newValue || 0 })
+    }
+
+    const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setModalData({ ...modalData, [e.target.name]: e.target.value })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -112,9 +128,20 @@ export default function RecommendPage() {
         - Include as many relevant universities and courses as you reasonably find suitable (minimum 1)
         - If more than 5 relevant universities or courses exist, prioritize the best 5 based on ranking, career outcomes, and affordability.
 
+        Generate a concise, relevant title for the entire response. The title should:
+        - Reflect the student's academic interests, career goals, or MBTI strengths.
+        - Be 8 to 15 words long.
+        - Avoid generic phrases like "Career Advice Report" or "Summary".
+        - Instead, make it feel tailored and motivating, such as:
+        - "Pathway to a Fulfilling Design Career for an ISFP Student"
+        - "Leveraging Strong STEM Grades Towards a Software Engineering Career in Canada"
+        - "Exploring Business Analytics in the UK: From Student to Strategy Consultant"
+        - "Creative and Financially-Informed Career Pathways for a Malaysian INFP Student"
+
         Respond in pure JSON (no quotes around the object, no markdown wrapping). Structure your JSON like this:
         {
-            "academicAdvice": "Detailed academic recommendations, including top universities and program strengths. Include admission difficulty levels, key subjects to focus on, and industry relevance.",
+            "title": "A personalized and specific headline reflecting the overall guidance based on academic strengths, personality, and goals",
+            "academicAdvice": "Detailed academic recommendations, including top universities and program strengths. Include admission difficulty levels, key subjects to focus on, and industry relevance",
             "universities": [
                 {
                     "name": "University name",
@@ -147,7 +174,7 @@ export default function RecommendPage() {
         NOTE: Values in the "universities" and "courses" keys are a list of dictionaries.
         IMPORTANT: Do not output any additional explanation. Only output the JSON object directly.`
 
-        const result = await fetch('/api/gpt/generate', {
+        const res = await fetch('/api/prompt/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -156,27 +183,57 @@ export default function RecommendPage() {
             body: JSON.stringify({ prompt: prompt })
         })
 
-        const recommendation = await result.json();
+        const recommendation = await res.json();
 
-        if (recommendation) {
+        // Parsing generated recommendation, 
+        // to remove title from JSON object and put to a new variable,
+        // storing both data separately in the database
+
+        const { title, ...restOfRecommendation } = recommendation.result;
+
+        const result = await fetch('/api/prompt/response', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ title: title, input: formData, response: restOfRecommendation })
+        })
+
+        const responseData = await result.json();
+        setPromptId(responseData?.id);
+
+        if (recommendation && responseData?.id) {
             setGeneratedRecommendation(recommendation);
         }
     }
 
-    const renderRecommendation = (data: RecommendationData | null ) => {
+    const handleModalSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const res = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ promptId: promptId, rating: modalData.rating, comment: modalData.comment })
+        })
+    }
+
+    const renderRecommendation = (data: generatedResponse | null, promptId: string) => {
         if (!data) return null;
-        console.log(data)
 
         return (
             <div className="bg-white text-black mt-4 p-6 space-y-8 rounded-2xl">
-                <div className="px-2 space-y-4">
-                    <p className="text-4xl">Academic Advice</p>
+                <div className="px-2 space-y-2">
+                    <p className="text-3xl">{data.result.title}</p>
                     <p className="text-xl">{data.result.academicAdvice}</p>
                 </div>
 
                 <div className="mt-2 px-2 space-y-2">
                     <div>
-                        <p className="text-4xl">Universities</p>
+                        <p className="text-2xl">Universities</p>
                     </div>
                     <div className="grid grid-flow-col auto-cols-max pb-2 overflow-x-auto gap-4">
                         {data.result.universities?.map((uni: { name: string, url: string }, index: number) => (
@@ -191,7 +248,7 @@ export default function RecommendPage() {
 
                 <div className="mt-2 px-2 space-y-2">
                     <div>
-                        <p className="text-4xl">Courses</p>
+                        <p className="text-2xl">Courses</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-flow-col md:auto-cols-fr w-full gap-4">
                         {data.result.courses?.map((course: { name: string, url: string, description: string }, index: number) => (
@@ -205,7 +262,7 @@ export default function RecommendPage() {
                 </div>
 
                 <div className="mt-2 px-2 space-y-2">
-                    <p className="text-4xl">Career Path</p>
+                    <p className="text-2xl">Career Path</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="border p-4 space-y-2 rounded-2xl">
                             <p className="text-2xl">Short Term (0-2 years)</p>
@@ -223,12 +280,12 @@ export default function RecommendPage() {
                 </div>
 
                 <div className="mt-2 px-2 space-y-2">
-                    <p className="text-4xl">Financial Advice</p>
+                    <p className="text-2xl">Financial Advice</p>
                     <p className="text-xl">{data.result.financialAdvice}</p>
                 </div>
 
                 <div className="mt-2 px-2 space-y-2">
-                    <p className="text-4xl">Salary Insights</p>
+                    <p className="text-2xl">Salary Insights</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="border p-4 space-y-2 rounded-2xl">
                             <p className="text-2xl">Entry Level</p>
@@ -245,6 +302,32 @@ export default function RecommendPage() {
                     </div>
                     <p className="text-xl">Note: {data.result.salaryInsights?.notes}</p>
                 </div>
+
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <button className="bg-black m-auto w-full rounded-2xl hover:scale-98 transition"><p className="text-white p-3">Click Me!</p></button></DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Your feedback is valuable to us.</DialogTitle>
+                            <DialogDescription>Please provide your feedback based on your satisfaction on the response.</DialogDescription>
+                        </DialogHeader>
+                        <div>
+                            <form className="space-y-4" onSubmit={handleModalSubmit}>
+                                <input name="promptId" type="hidden" value={promptId}/>
+                                <div>
+                                    <label htmlFor="comment">Comments</label>
+                                    <input className="block mt-1 w-full p-3 border-2 rounded-2xl" id="comment" name="comment" type="text" value={modalData.comment} onChange={handleFeedbackChange} autoComplete="off" />
+                                </div>
+
+                                <div className="flex m-auto justify-center items-center">
+                                    <RatingComponent value={modalData.rating} onChange={handleRatingChange} />
+                                </div>
+
+                                <button className="bg-black mt-4 w-full rounded-2xl" type="submit"><p className="text-white p-3">Submit Your Feedback</p></button>
+                            </form>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     };
@@ -253,17 +336,17 @@ export default function RecommendPage() {
         <PageTransitionEffect>
             <FramedScreen>
                 <Navbar />
-                <div className="text-white w-full m-auto pt-6 px-6 justify-center items-center overflow-y-auto rounded-2xl custom-scrollbar">
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <div className={`text-white w-full ${generatedRecommendation ? '' : 'md:w-3/4'} m-auto pt-6 px-6 justify-center items-center overflow-y-auto rounded-2xl transition-all duration-750 custom-scrollbar`}>
+                    <form onSubmit={handleSubmit} className="space-y-2">
                         {/* First row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="grades"><p className="text-xl">Academic Grades</p></label>
-                                <input className="block bg-black text-white p-4 border-2 rounded-2xl" name="grades" type="text" value={formData.grades} onChange={handleChange} placeholder="Enter Your Grades" />
+                                <input className="block bg-black text-white p-3 border-2 rounded-2xl" name="grades" type="text" value={formData.grades} onChange={handleFormChange} placeholder="Enter Your Grades" autoComplete="off"/>
                             </div>
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="educationLevel"><p className="text-xl">Current Education Level</p></label>
-                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="educationLevel" defaultValue={"default"} onChange={handleChange}>
+                                <select className="block bg-black text-white p-3 border-2 rounded-2xl" name="educationLevel" defaultValue={"default"} onChange={handleFormChange}>
                                     <option value="default">Select your education level</option>
                                     <option value="highSchool">High School / A-Levels / STPM</option>
                                     <option value="diploma">Diploma</option>
@@ -276,7 +359,7 @@ export default function RecommendPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="country"><p className="text-xl">Country of Study Interest</p></label>
-                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="country" defaultValue={"default"} onChange={handleChange}>
+                                <select className="block bg-black text-white p-3 border-2 rounded-2xl" name="country" defaultValue={"default"} onChange={handleFormChange}>
                                     <option value="default">Select country</option>
                                     <option value="Singapore">Singapore</option>
                                     <option value="Malaysia">Malaysia</option>
@@ -286,7 +369,7 @@ export default function RecommendPage() {
                             </div>
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="mbti"><p className="text-xl">MBTI Personality Type</p></label>
-                                <select className="block bg-black text-white p-4 border-2 rounded-2xl" name="mbti" defaultValue={"default"} onChange={handleChange}>
+                                <select className="block bg-black text-white p-3 border-2 rounded-2xl" name="mbti" defaultValue={"default"} onChange={handleFormChange}>
                                     <option value="default">Select MBTI type</option>
                                     <option value="INTJ">INTJ - Architect</option>
                                     <option value="INTP">INTP - Logician</option>
@@ -312,11 +395,11 @@ export default function RecommendPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="annualHouseholdIncome"><p className="text-xl">Annual Household Income</p></label>
-                                <input className="block p-4 border-2 rounded-2xl" name="annualHouseholdIncome" type="text" value={formData.annualHouseholdIncome} onChange={handleChange} placeholder="" />
+                                <input className="block p-3 border-2 rounded-2xl" name="annualHouseholdIncome" type="text" value={formData.annualHouseholdIncome} onChange={handleFormChange} placeholder="" autoComplete="off"/>
                             </div>
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="extracurricular"><p className="text-xl">Extracurricular Activities</p></label>
-                                <input className="block p-4 border-2 rounded-2xl" name="extracurricular" type="text" value={formData.extracurricular} onChange={handleChange} placeholder="" />
+                                <input className="block p-3 border-2 rounded-2xl" name="extracurricular" type="text" value={formData.extracurricular} onChange={handleFormChange} placeholder="" autoComplete="off"/>
                             </div>
                         </div>
 
@@ -324,24 +407,24 @@ export default function RecommendPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="company"><p className="text-xl">Preferred Company</p></label>
-                                <input className="block p-4 border-2 rounded-2xl" name="company" type="text" value={formData.company} onChange={handleChange} placeholder="" />
+                                <input className="block p-3 border-2 rounded-2xl" name="company" type="text" value={formData.company} onChange={handleFormChange} placeholder="" autoComplete="off"/>
                             </div>
                             <div className="flex flex-col">
                                 <label className="mb-2" htmlFor="jobRole"><p className="text-xl">Preferred Job Role</p></label>
-                                <input className="block p-4 border-2 rounded-2xl" name="jobRole" type="text" value={formData.jobRole} onChange={handleChange} placeholder="" />
+                                <input className="block p-3 border-2 rounded-2xl" name="jobRole" type="text" value={formData.jobRole} onChange={handleFormChange} placeholder="" autoComplete="off"/>
                             </div>
                         </div>
 
                         {/* Last row */}
                         <div className="flex flex-col">
                             <label className="mb-2" htmlFor="course"><p className="text-xl">Preferred Course/Major</p></label>
-                            <input className="block p-4 border-2 rounded-2xl" name="course" type="text" value={formData.course} onChange={handleChange} placeholder="" />
+                            <input className="block p-3 border-2 rounded-2xl" name="course" type="text" value={formData.course} onChange={handleFormChange} placeholder="" autoComplete="off"/>
                         </div>
-                        <div className="m-auto">
-                            <button className="bg-white m-auto rounded-2xl" type="submit"><p className="text-black p-3">Get Personalized Recommendations</p></button>
+                        <div className="flex">
+                            <button className="bg-white w-full m-auto rounded-2xl hover:scale-99 transition" type="submit"><p className="text-black p-3">Get Personalized Recommendations</p></button>
                         </div>
                     </form>
-                    {renderRecommendation(generatedRecommendation)}
+                    {renderRecommendation(generatedRecommendation, promptId)}
                 </div>
             </FramedScreen>
         </PageTransitionEffect>
